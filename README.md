@@ -2,19 +2,18 @@
 <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
 </div>
 
-# Run and deploy your AI Studio app
+# Smart Production Planner AI
 
-This contains everything you need to run your app locally.
+Production planning and raw material requirement planning for cooking oil manufacturing.
 
-View your app in AI Studio: https://ai.studio/apps/7e44bc69-a331-4b1b-bb94-270597038c81
+## Run locally
 
-## Run Locally
+**Prerequisites:** Node.js 22+
 
-**Prerequisites:**  Node.js
+1. Install dependencies with `npm ci --legacy-peer-deps`.
+2. Optionally set `GEMINI_API_KEY` in `.env.local` to enable Gemini-powered answers. The planner and AI assistant's rule-based fallbacks work without it.
+3. Start the app with `npm run dev`.
 
+## Public deployment
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+The `Deploy to GitHub Pages` workflow builds and publishes the app to https://alaskahid-25.github.io/PLANNING/ whenever changes are pushed to `main`. AI assistant features use the built-in local rule-based fallback on GitHub Pages; Gemini API calls require the Express server and a server-side API key.
