@@ -1,0 +1,6 @@
+{
+  "name": "Smart Production Planner AI",
+  "description": "Intelligent production planning and raw material requirement planning system for cooking oil manufacturing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

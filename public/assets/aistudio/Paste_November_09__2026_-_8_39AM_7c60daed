@@ -1,0 +1,845 @@
+# PROJECT: SMART PRODUCTION PLANNER AI
+## Complete Application Development Prompt for Google AI Studio – Build Mode
+
+Act as a senior full-stack developer, manufacturing ERP consultant, production planning specialist, inventory analyst, procurement expert, and AI application architect.
+
+Build a professional, fully functional, responsive web application called **SMART PRODUCTION PLANNER AI** for a cooking oil manufacturing company.
+
+This application must help the Production Planning, Stores, Procurement, Finance, and Management teams calculate material requirements for upcoming production plans, evaluate stock availability, identify shortages and excess stock, estimate material costs, prioritize procurement, and generate management-ready reports.
+
+This must be a working application, not just a dashboard mockup or UI prototype.
+
+---
+
+# 1. MAIN OBJECTIVE
+
+Develop an intelligent production planning and raw material requirement planning application.
+
+The user will manually upload three Excel files:
+
+1. Combined SKU Master + BOM Master
+2. Store Stock
+3. Production Plan
+
+The application must process these files, validate their contents, calculate consolidated raw material and packaging material requirements, compare requirements against available stock, identify shortages and excess quantities, and recommend procurement actions.
+
+The application must support multiple SKUs, multiple BOM components per SKU, and multiple production plans.
+
+All calculations must be accurate, traceable, and transparent.
+
+---
+
+# 2. FILE UPLOAD MODULE
+
+Create an attractive file upload section on the home dashboard.
+
+The application must have exactly THREE main Excel upload sections.
+
+### FILE 1: COMBINED SKU MASTER + BOM MASTER
+
+The SKU Master and BOM Master are maintained in ONE Excel file.
+
+The actual BOM format contains these six columns:
+
+| Column | Description |
+|---|---|
+| SKU | Finished goods SKU code |
+| SKU name | Finished goods description |
+| RM | Raw material / packaging material code |
+| RM dec | Raw material / packaging material description |
+| Uom | Unit of measurement |
+| Norms | Consumption norm |
+
+Example:
+
+| SKU | SKU name | RM | RM dec | Uom | Norms |
+|---|---|---|---|---|---:|
+| 7.A.001607 | RAJNI GOLD REFINED PALMOLEIN OIL BOX | 1.N.009083 | FILM ROLL RAJNI GOLD | KGS | 0.06 |
+| 7.A.001607 | RAJNI GOLD REFINED PALMOLEIN OIL BOX | 1.N.009084 | KRAFT CARTON BOX | NOS | 1.00 |
+| 7.A.001607 | RAJNI GOLD REFINED PALMOLEIN OIL BOX | 1.N.005814 | BOPP TAPE | NOS | 0.00 |
+| 7.A.001329 | RAJNI GOLD REFINED PALMOLEIN OIL | 1.N.009083 | FILM ROLL RAJNI GOLD | KGS | 0.09 |
+
+Important processing rules:
+
+- One SKU may have multiple RM components.
+- The same SKU may appear in multiple rows.
+- Every row represents one BOM component.
+- Blank rows must be ignored.
+- Repeated SKU codes must not be treated as duplicate records if their RM codes differ.
+- SKU codes and RM codes must be stored as TEXT, preserving dots, letters, leading zeros, and special characters.
+- Never convert codes into numbers.
+- Do not truncate long descriptions.
+- Zero norms are valid and must not automatically be deleted.
+- Missing or invalid norms must be flagged for correction.
+- Do not silently discard invalid BOM records.
+- Validate that each SKU has an identifiable SKU name and each RM has an identifiable material description and UOM.
+- The application must support Excel files containing multiple sheets and let the user select the correct sheet if necessary.
+- Automatically recognize the six columns even if their positions change.
+- If headers are slightly different, provide a column-mapping screen.
+
+### BOM CALCULATION LOGIC
+
+The application must calculate:
+
+Material Requirement = Production Quantity × BOM Norms
+
+However, the meaning of the production quantity and the unit represented by the BOM norms must be confirmed or configured before final calculations.
+
+Provide a configurable production unit setting and, if necessary, a conversion factor for cartons, pouches, bottles, kilograms, or litres.
+
+Never assume that a planned quantity of 10,000 automatically means 10,000 individual units or 10,000 cartons.
+
+If the production quantity unit is unclear, ask the user to configure it before processing the plan.
+
+---
+
+### FILE 2: STORE STOCK
+
+The Store Stock Excel file follows the company's existing ERP export format.
+
+The application must preserve and recognize these actual column names:
+
+**Material identification:**
+- S.NO
+- Last Issue Date
+- Itemcode
+- Description
+- UOM
+
+**Current stock and stock movement:**
+- Opening
+- Receipts
+- GP Pending
+- Hold/Reject Items Confirmed By QC
+- Others
+- QC Issues
+- Loading Issue
+- Packing Issues
+- Ready Stock For Production
+- Total Closing
+- WIP
+- Total Quantity(WIP& Closing)
+- Remarks
+
+**Historical issues:**
+- Upto 29th receipts
+- Others
+- Upto 29th QC Issues
+- Upto 29th Loading Issues
+- Upto 29th Packing Issues
+- Upto Date Total Issues
+
+**Inventory controls:**
+- Min.Stock
+- True/False
+- Max Stock
+- Max Qty Exceed details
+- Re-order qty
+- MOQ
+- Re-order level
+- Order / No Order
+- Needed qty
+
+**Procurement lead times:**
+- Leadtime (After Open PO process)
+- Max Purchase Processing Time (PR-PO)
+- Total lead time (Days)
+- Avg W.T
+
+**Additional stock and batch information:**
+- Opening
+- Receipts
+- Issues
+- Total Closing
+- Lot Numbers
+- Date of Manufacture
+- Date of Expiry/best before /re-test
+- Remarks_QC_as on 07.12.2024
+
+The original ERP spreadsheet may contain blank columns, repeated headings, date columns, or extra formatting.
+
+The application must:
+- Recognize the actual field names.
+- Ignore completely blank columns.
+- Preserve all useful source data.
+- Allow manual column mapping if automatic detection fails.
+- Handle blank numeric cells as zero for calculations where appropriate.
+- Never treat blank material codes as valid materials.
+- Match material codes using Itemcode.
+- Match the Store Stock Itemcode against BOM RM.
+- Match using exact material codes, not descriptions alone.
+- Preserve UOM and flag mismatches.
+- Handle repeated stock records for the same material carefully and prevent accidental double counting.
+- Flag duplicate material codes for user review if they appear to represent separate locations, lots, or records.
+
+### STORE STOCK CALCULATION RULES
+
+Create a stock availability configuration.
+
+Default recommended calculation:
+
+Available Stock = Ready Stock For Production
+
+Display WIP separately. Do not automatically count WIP as immediately usable stock.
+
+Also display:
+- Opening Stock
+- Receipts
+- QC Issues
+- Loading Issues
+- Packing Issues
+- Other Issues
+- Total Closing
+- WIP
+- Total Quantity (WIP & Closing)
+- Hold/Reject quantities
+
+Allow the user to select an alternative stock basis if their business process requires it.
+
+The stock basis must be visible in the report so management knows which stock figure was used.
+
+Do not add Ready Stock For Production, Total Closing, and WIP together because these fields may overlap.
+
+Do not double-count stock movements or historical issue columns.
+
+If the chosen stock field is blank, flag it for review rather than silently substituting another stock figure.
+
+---
+
+### FILE 3: PRODUCTION PLAN
+
+Create an upload module for the Production Plan Excel file.
+
+The file should support the following standard fields:
+
+- Date
+- SKU
+- SKU Name (optional)
+- Planned Quantity
+- Production Unit (optional)
+
+The application must also support column mapping for differently named ERP or planning columns.
+
+Requirements:
+
+- Identify each planned SKU.
+- Match the SKU against the combined SKU + BOM master.
+- Calculate RM requirements for each SKU.
+- Consolidate all material requirements across the complete production plan.
+- Support multiple production dates and multiple SKUs.
+- Allow the user to filter the plan by date, SKU, or production period.
+- Identify SKUs missing from the BOM master.
+- Identify duplicate or invalid production plan entries.
+- Do not calculate final material requirements if the quantity unit is ambiguous.
+
+If the uploaded production plan does not contain a production unit, ask the user to select the correct unit and configure any necessary conversion.
+
+---
+
+# 3. MAIN CALCULATION ENGINE
+
+This is the most important part of the application.
+
+Develop a reliable calculation engine that performs the following steps.
+
+### STEP 1: Read production plan
+
+Read all SKUs and planned quantities from the uploaded production plan.
+
+### STEP 2: Identify BOM components
+
+For every SKU, retrieve all matching RM records from the combined SKU + BOM master.
+
+### STEP 3: Calculate SKU-wise material requirements
+
+For each SKU and each RM:
+
+Required RM Quantity = Planned SKU Quantity × Norms
+
+Apply the configured unit conversions where necessary.
+
+### STEP 4: Consolidate materials
+
+Combine requirements for the same RM code across all SKUs.
+
+The consolidation key must be:
+
+RM Code + UOM
+
+Example:
+
+| SKU | RM Code | UOM | Norms | Planned Qty | RM Requirement |
+|---|---|---|---:|---:|---:|
+| SKU A | RM001 | KGS | 0.06 | 10,000 | 600 |
+| SKU B | RM001 | KGS | 0.09 | 5,000 | 450 |
+| SKU C | RM001 | KGS | 0.05 | 2,000 | 100 |
+
+Consolidated requirement for RM001 = 1,150 KGS.
+
+If the same RM code occurs with different UOMs, do not combine those quantities. Flag the inconsistency for review.
+
+### STEP 5: Match consolidated requirements with Store Stock
+
+Match the consolidated RM Code against Store Stock Itemcode.
+
+Produce one consolidated material requirement report.
+
+### STEP 6: Calculate shortages and excess stock
+
+For each material:
+
+Net Position = Available Stock − Required Quantity
+
+Shortage = Maximum of (Required Quantity − Available Stock, 0)
+
+Excess = Maximum of (Available Stock − Required Quantity, 0)
+
+Show all calculations with the underlying source figures.
+
+### STEP 7: Identify unmatched records
+
+Flag:
+- BOM material not found in Store Stock.
+- Production SKU not found in BOM Master.
+- BOM material with missing UOM.
+- Material code with inconsistent UOM.
+- Invalid or missing norms.
+- Missing production quantity.
+- Missing stock quantity.
+- Duplicate or conflicting material records.
+
+Create an exception report so the user can correct source data before relying on the final results.
+
+---
+
+# 4. PROCUREMENT PLANNING MODULE
+
+Develop an intelligent procurement planning module.
+
+Use these Store Stock fields wherever available:
+
+- Ready Stock For Production
+- Min.Stock
+- Max Stock
+- Re-order qty
+- MOQ
+- Re-order level
+- Order / No Order
+- Needed qty
+- Leadtime
+- Max Purchase Processing Time (PR-PO)
+- Total lead time (Days)
+
+Calculate the additional procurement requirement.
+
+Basic procurement shortage:
+
+Procurement Shortage = Maximum of (Required Quantity − Available Stock, 0)
+
+Where MOQ and reorder rules apply, recommend a purchase quantity that meets the requirement and applicable procurement constraints.
+
+Do not blindly add MOQ to every material.
+
+Use the following logic:
+
+1. Identify actual shortage.
+2. Check reorder level.
+3. Check existing re-order quantity and Needed qty.
+4. Check MOQ.
+5. Check maximum stock where applicable.
+6. Calculate the suggested purchase quantity.
+7. Clearly display any rounding or MOQ adjustment.
+8. Avoid recommending unnecessary purchases when available stock is sufficient.
+9. Do not count existing open purchase orders as received stock.
+10. If GP Pending or other pending procurement figures are used, display them separately and allow the user to decide whether they should be included in projected availability.
+
+Create procurement priority levels:
+
+- CRITICAL: Material shortage may stop or delay production.
+- HIGH: Material shortage with long procurement lead time.
+- MEDIUM: Shortage with manageable procurement lead time.
+- LOW: No immediate shortage but stock is approaching reorder level.
+- NO ACTION: Sufficient stock for the production plan.
+
+Calculate procurement urgency using shortage quantity, required production date, and total procurement lead time.
+
+Where production dates are available, calculate:
+
+Latest Procurement Release Date = Required Material Availability Date − Total Lead Time
+
+If there is insufficient date information, show a lead-time risk indicator instead of inventing a date.
+
+---
+
+# 5. MATERIAL COSTING MODULE
+
+Create a costing module.
+
+Allow the user to upload a separate optional material price list or manually enter/update material rates.
+
+The application must support:
+
+- RM Code
+- Material Description
+- UOM
+- Rate per UOM
+- Currency
+- Effective Date (optional)
+
+Calculate:
+
+Material Cost = Required RM Quantity × Rate per UOM
+
+Produce:
+- SKU-wise material cost.
+- Material-wise total cost.
+- Total raw material cost.
+- Total packaging material cost, where material categories can be identified.
+- Cost of shortage quantities.
+- Estimated procurement value.
+- SKU-wise material cost per production unit, where the production unit is configured.
+
+Never invent material rates.
+
+If no rate is available, show "RATE NOT AVAILABLE" and exclude that material from the cost total while clearly reporting the uncosted quantity and number of missing rates.
+
+Do not combine incompatible currencies or UOMs.
+
+---
+
+# 6. DASHBOARD
+
+Create a modern professional dashboard suitable for a manufacturing company.
+
+The dashboard must display the following KPI cards:
+
+1. Total SKUs in Production Plan
+2. Total Planned Production Quantity
+3. Total Unique RM Materials
+4. Total Material Requirement
+5. Materials with Sufficient Stock
+6. Materials with Shortage
+7. Materials with Excess Stock
+8. Materials Missing from Store Stock
+9. Critical Procurement Items
+10. Estimated Material Cost
+11. Estimated Procurement Value
+12. Long Lead-Time Materials
+
+Include interactive charts:
+
+- Required Quantity vs Available Stock.
+- Material Shortage by RM.
+- SKU-wise Production Plan.
+- Procurement Priority Distribution.
+- Material Cost by SKU.
+- Material Cost by RM.
+- Stock Sufficiency Percentage.
+- Top 10 Materials with Highest Shortage.
+
+Charts must update dynamically whenever files are uploaded or calculations are refreshed.
+
+---
+
+# 7. DETAILED REPORTS
+
+Create separate report pages with filtering, sorting, and search functionality.
+
+### REPORT 1: CONSOLIDATED MATERIAL REQUIREMENT
+
+Columns:
+
+- S.No
+- RM Code
+- RM Description
+- UOM
+- Total Required Quantity
+- Available Stock
+- WIP
+- Total Closing
+- Shortage
+- Excess
+- Stock Status
+- Procurement Priority
+
+### REPORT 2: SKU-WISE MATERIAL REQUIREMENT
+
+Columns:
+
+- SKU
+- SKU Name
+- Planned Quantity
+- RM Code
+- RM Description
+- UOM
+- Norms
+- Required Quantity
+
+### REPORT 3: MATERIAL SHORTAGE REPORT
+
+Columns:
+
+- RM Code
+- RM Description
+- UOM
+- Required Quantity
+- Available Stock
+- Shortage
+- Shortage Percentage
+- Required Production Date
+- Total Lead Time
+- Procurement Priority
+- Suggested Purchase Quantity
+
+### REPORT 4: EXCESS STOCK REPORT
+
+Columns:
+
+- RM Code
+- RM Description
+- UOM
+- Available Stock
+- Required Quantity
+- Excess Quantity
+- Maximum Stock
+- Excess Above Maximum Stock
+
+### REPORT 5: PROCUREMENT ACTION REPORT
+
+Columns:
+
+- RM Code
+- RM Description
+- UOM
+- Shortage
+- Re-order Level
+- MOQ
+- Re-order Qty
+- Needed Qty
+- Total Lead Time
+- Suggested Purchase Quantity
+- Latest Procurement Release Date
+- Priority
+- Action Required
+
+### REPORT 6: MATERIAL COST REPORT
+
+Columns:
+
+- RM Code
+- RM Description
+- UOM
+- Required Quantity
+- Rate
+- Total Cost
+- Missing Rate Status
+
+### REPORT 7: DATA VALIDATION REPORT
+
+Display all issues found in uploaded Excel files with:
+- File name
+- Excel sheet
+- Row number
+- Column name
+- Issue description
+- Suggested correction
+
+---
+
+# 8. AI MANAGEMENT ASSISTANT
+
+Integrate an AI-powered production planning assistant.
+
+It must analyze the calculated results and answer questions such as:
+
+- Which materials are likely to stop production?
+- Which materials must be ordered immediately?
+- Which materials have sufficient stock?
+- Which materials have excess stock?
+- Which materials have long procurement lead times?
+- Which SKUs are driving the highest material consumption?
+- What is the total procurement requirement?
+- What is the estimated material cost?
+- What are the biggest procurement risks?
+- What actions should the procurement department take today?
+- What is the overall production readiness status?
+
+The AI assistant must use the uploaded and calculated data as its source.
+
+It must never invent stock quantities, prices, BOM norms, purchase orders, or procurement dates.
+
+If information is missing, it must explicitly say so.
+
+Generate an executive management summary containing:
+
+1. Overall production readiness.
+2. Total planned production.
+3. Materials with sufficient stock.
+4. Critical material shortages.
+5. High-priority purchase requirements.
+6. Procurement lead-time risks.
+7. Excess inventory observations.
+8. Estimated material cost.
+9. Recommended immediate actions.
+
+Use professional business language suitable for the Managing Director, Plant Head, Finance Head, Stores Manager, and Procurement Manager.
+
+---
+
+# 9. FILTERS AND SEARCH
+
+Provide filters throughout the application:
+
+- Production date range.
+- SKU.
+- SKU name.
+- RM code.
+- RM description.
+- UOM.
+- Stock status.
+- Procurement priority.
+- Shortage only.
+- Excess only.
+- Long lead-time materials.
+- Materials with missing stock records.
+- Materials with missing rates.
+
+Provide a global search function for SKU and RM codes.
+
+---
+
+# 10. EXCEL AND PDF EXPORTS
+
+The application must support downloadable reports.
+
+Provide buttons for:
+
+- Download Consolidated Material Requirement (Excel).
+- Download SKU-wise RM Requirement (Excel).
+- Download Shortage Report (Excel).
+- Download Excess Stock Report (Excel).
+- Download Procurement Plan (Excel).
+- Download Material Cost Report (Excel).
+- Download Data Validation Report (Excel).
+- Download Management Summary (PDF).
+- Download Complete Production Planning Report (PDF).
+
+Excel exports must have:
+- Clear headers.
+- Proper number formatting.
+- Preserved material and SKU codes as text.
+- Filters.
+- Appropriate column widths.
+- Separate sheets for different reports.
+
+PDF reports must have:
+- Company-ready formatting.
+- Report title.
+- Production plan period.
+- Report generation date.
+- Executive summary.
+- KPI summary.
+- Detailed material tables.
+- Procurement recommendations.
+- Data validation warnings.
+
+---
+
+# 11. PRODUCTION PLAN HISTORY
+
+Create a history module.
+
+Every time a user processes a production plan, save a record containing:
+
+- Plan name.
+- Upload date and time.
+- Production period.
+- Number of SKUs.
+- Total planned production.
+- Total material requirements.
+- Total shortage.
+- Total estimated cost, if available.
+- Processing status.
+
+Allow the user to reopen previous planning results, compare different production plans, and download historical reports.
+
+Do not overwrite previous plans without confirmation.
+
+---
+
+# 12. USER INTERFACE DESIGN
+
+Create a premium, modern, professional manufacturing ERP-style interface.
+
+Application name:
+
+SMART PRODUCTION PLANNER AI
+
+Design requirements:
+
+- Clean and professional layout.
+- Dark navy and white colour scheme with restrained green and orange highlights.
+- Left-side navigation menu.
+- Dashboard home page.
+- KPI cards.
+- Professional charts and tables.
+- Clear shortage and excess indicators.
+- Responsive design for desktop, tablet, and mobile.
+- Loading indicators during Excel processing.
+- Clear error messages.
+- Confirmation messages after successful uploads and calculations.
+
+Left navigation:
+
+1. Dashboard
+2. Upload Excel Files
+3. Production Plan
+4. Material Requirement
+5. Stock Analysis
+6. Shortage Analysis
+7. Excess Stock
+8. Procurement Planning
+9. Material Costing
+10. AI Management Summary
+11. Data Validation
+12. Plan History
+13. Settings
+
+The application must be simple enough for a production planner to operate without technical knowledge.
+
+---
+
+# 13. TECHNICAL REQUIREMENTS
+
+Build the application with a reliable modern web technology stack supported by Google AI Studio Build mode.
+
+Requirements:
+
+- Functional Excel upload and parsing.
+- Support .xlsx and .xls files where technically supported.
+- Use a reliable Excel parsing library.
+- Handle large spreadsheets efficiently.
+- Keep calculation logic separate from UI components.
+- Use exact string matching for material and SKU codes.
+- Use decimal-safe calculations for material quantities and costs.
+- Do not use rounded intermediate values in calculations.
+- Round only for display and export according to configurable decimal precision.
+- Maintain a clear data model.
+- Validate all uploaded files before calculation.
+- Allow users to correct column mappings.
+- Display calculation timestamps.
+- Ensure all dashboard values reconcile with detailed reports.
+- Do not use fabricated sample values in actual calculation results.
+- Clearly distinguish demonstration data from uploaded business data.
+- Provide a reset option with confirmation.
+- Preserve the uploaded source files or a recoverable record of their processing, subject to the application's storage design.
+- Do not expose sensitive uploaded company data to unauthorized users.
+- If persistent storage or user authentication is not configured, clearly indicate the session's data persistence limitations.
+
+---
+
+# 14. IMPORTANT BUSINESS RULES
+
+These rules are mandatory.
+
+1. The application has exactly three required input files: Combined SKU + BOM Master, Store Stock, and Production Plan.
+
+2. SKU Master and BOM Master must be treated as one combined Excel file.
+
+3. BOM RM codes must match Store Stock Itemcode.
+
+4. SKU codes and material codes must always be treated as text.
+
+5. All material requirements must be calculated from the uploaded BOM norms.
+
+6. Consolidate the same RM code across all planned SKUs, provided UOMs are consistent.
+
+7. Do not combine quantities with different UOMs.
+
+8. Ready Stock For Production is the recommended default available stock figure. WIP must remain separate unless the user explicitly selects another stock policy.
+
+9. Do not double-count stock fields.
+
+10. Do not invent prices or material requirements.
+
+11. Do not silently ignore missing records or calculation errors.
+
+12. Provide complete calculation traceability from production SKU to BOM component to consolidated RM requirement to stock comparison.
+
+13. The procurement recommendation must consider MOQ, reorder level, reorder quantity, existing pending requirements, and procurement lead time when reliable data is available.
+
+14. All reports and dashboard KPIs must use the same calculation engine.
+
+15. If a required business assumption is unknown, ask the user or provide a configurable setting before calculating.
+
+---
+
+# 15. SAMPLE VALIDATION TEST
+
+Before declaring the application complete, test the calculation engine using this sample:
+
+Production plan:
+
+| SKU | Planned Quantity |
+|---|---:|
+| 7.A.001607 | 10,000 |
+| 7.A.001329 | 5,000 |
+
+BOM:
+
+| SKU | RM | UOM | Norms |
+|---|---|---|---:|
+| 7.A.001607 | 1.N.009083 | KGS | 0.06 |
+| 7.A.001329 | 1.N.009083 | KGS | 0.09 |
+
+Expected consolidated requirement:
+
+- SKU 7.A.001607: 10,000 × 0.06 = 600 KGS.
+- SKU 7.A.001329: 5,000 × 0.09 = 450 KGS.
+- Total RM 1.N.009083 requirement = 1,050 KGS.
+
+If Store Stock Ready Stock For Production = 800 KGS:
+
+- Required = 1,050 KGS.
+- Available = 800 KGS.
+- Shortage = 250 KGS.
+- Excess = 0 KGS.
+
+The application must produce these exact results.
+
+Use this as an internal calculation test, not as actual company stock data.
+
+---
+
+# 16. FINAL DEVELOPMENT INSTRUCTIONS
+
+Build the complete working application now.
+
+Do not stop after creating the dashboard design.
+
+Implement:
+
+- All three Excel upload modules.
+- Automatic header recognition.
+- Manual column mapping.
+- Data validation.
+- BOM processing.
+- SKU-wise material calculations.
+- Consolidated RM calculations.
+- Store Stock matching.
+- Stock sufficiency analysis.
+- Shortage and excess calculations.
+- Procurement recommendations.
+- Costing.
+- Interactive dashboard.
+- Detailed reports.
+- AI management summary.
+- Excel exports.
+- PDF exports.
+- Plan history.
+
+Start with the complete application structure and implement the calculation engine before the dashboard.
+
+Make sure the application is reliable, easy to use, and suitable for real production planning in a cooking oil manufacturing company.
+
+**The ultimate objective is to provide a single intelligent production planning system that tells management exactly what materials are required, what materials are available, what materials are short, what must be purchased, when procurement should be initiated, and what the estimated material cost will be.**
